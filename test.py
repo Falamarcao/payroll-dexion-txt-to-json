@@ -22,8 +22,6 @@ class TestTheData:
                 "status": {
                     "type": str,
                     "description": str,
-                    "date": str,
-                    "period": dict,
                 },
                 "netSalary": {
                     "unit": str,
@@ -87,12 +85,3 @@ class TestTheData:
         except:
             exception('Error during running tests on data.')
             return True
-
-
-
-
-
-
-
-        
-
