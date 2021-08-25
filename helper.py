@@ -9,8 +9,11 @@ def convert_number(n, num_data_type):
     except:
         return n
 
-def to_AWSDate(date_string):
-    match = search(r'\d{2}/\d{2}/\d{4}', date_string)
+def to_AWSDate(date_string, year=None):
+    if year:
+        match = search(r'\d{2}/\d{2}/' + year, date_string)
+    else:
+        match = search(r'\d{2}/\d{2}/\d{4}', date_string)
     return datetime.strptime(match.group(), '%d/%m/%Y').strftime('%Y-%m-%d') if match else None
 
 def company_data(name: str):
@@ -32,9 +35,9 @@ def company_data(name: str):
     raise Exception("Error on helper.company_data: Employee's company not recognized")
 
 
-def getData(matrix, include_locationCode=False):
+def getData(matrix, year, include_locationCode=False):
     """
-    Look for job title, location code and admission date
+    Look for job title, location code and status
     """
     job_title = locationCode = None
 
@@ -61,15 +64,31 @@ def getData(matrix, include_locationCode=False):
                             output.update({'jobTitle': None})
                         
                 if column[0:12] == 'ADMISSÃO EM ':
-                    output.update({'hiredAt': to_AWSDate(matrix[i].pop(ii)[12:])})
+                    output.update({'status': {'type': 'active', 'date': to_AWSDate(matrix[i].pop(ii)[12:])}})
                 elif column[0:9] == 'RESCISÃO ':
-                    output.update({'terminatedAt': to_AWSDate(matrix[i].pop(ii)[9:])})
+                    output.update({'status': {'type': 'inactive', 'date': to_AWSDate(matrix[i].pop(ii)[9:])}})
                 elif column[0:7] == 'FÉRIAS ':
-                    period = matrix[i].pop(ii)[7:].split(' A ')
-                    output.update({'vacationAt': {'start': to_AWSDate(period[0]), 'end': to_AWSDate(period[1])}})
+                    period = matrix[i].pop(ii)[7:].split('A')
+                    output.update({'status': {'type': 'vacation', 'period': {'start': to_AWSDate(period[0]), 'end': to_AWSDate(period[1])}}})
+                elif column[0:16] == 'LICENÇA S/ VENC ':
+                    period = matrix[i].pop(ii)[16:].split('A')
+                    output.update({'status': {'type': 'away', 'description': 'Licença Sem Vencimento', 'period': {'start': to_AWSDate(period[0], year), 'end': to_AWSDate(period[1], year)}}})
+                elif column[0:12] == 'AUX. DOENÇA ':
+                    period = matrix[i].pop(ii)[12:].split('A')
+                    output.update({'status': {'type': 'away', 'description': 'Auxílio Doença', 'period': {'start': to_AWSDate(period[0], year), 'end': to_AWSDate(period[1], year)}}})
+                elif column[0:15] == 'ACID. TRABALHO ':
+                    period = matrix[i].pop(ii)[15:].split('A')
+                    output.update({'status': {'type': 'away', 'description': 'Acidente de Trabalho', 'period': {'start': to_AWSDate(period[0], year), 'end': to_AWSDate(period[1], year)}}})
+                elif column[0:8] == 'TRANSF. ':
+                    output.update({'status': {'type': 'inactive', 'description': 'Transferência', 'date': to_AWSDate(matrix[i].pop(ii)[9:])}})
+                elif column[0:16] == 'OUTROS AFASTAM. ':
+                    period = matrix[i].pop(ii)[16:].split('A')
+                    output.update({'status': {'type': 'away', 'description': 'Outros', 'period': {'start': to_AWSDate(period[0], year), 'end': to_AWSDate(period[1], year)}}})        
                 
-                if len(output.keys()) > 2:
-                    return output
+                if not include_locationCode and len(output.keys()) == 2:
+                        return output
+                elif len(output.keys()) == 3:
+                        return output
 
     return output
 
