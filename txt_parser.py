@@ -1,10 +1,9 @@
 from helper import (convert_number, to_AWSDate, getData,
                     company_data, earnings_disconts)
+from re import split, sub, finditer, DOTALL
 from datetime import datetime, timezone
 from decimal import Decimal
 from json import dumps
-from re import split, sub, finditer, DOTALL
-from pprint import pprint
 
 
 def crazy_txt_to_json(file_content, is_dynamodb=True):
@@ -44,12 +43,20 @@ def crazy_txt_to_json(file_content, is_dynamodb=True):
             if len(rows) > 1:
                 matrix = []
                 for row in rows:
-                    columns = list(filter(lambda x: False if x in [' ','',' :',':','-'] else True, '_{N/A}_'.join(row.replace(':','').split(' '*50)).split(' '*3)))
+                    columns = list(filter(lambda x: False if x in [' ','',' :',':','-'] else True, '_{N/A}_'.join(row.replace(':','').split(' '*50)).split('   ')))
                     for idx_column in range(len(columns)):
+
+                        # Split columns that have 2 empty spaces (' '*2) and not ' '*3
+                        new_columns = list(filter(None, columns[idx_column].split('  ')))
+                        if len(new_columns) == 2 and isinstance(convert_number(new_columns[0], num_data_type), num_data_type):
+                            columns = columns[:idx_column] + new_columns + columns[idx_column + 2:]
+
+                        # Set empty columns - cleaning wrong insertions of N/A
                         if columns[idx_column] == '_{N/A}_':
                             columns[idx_column] = None
                         else:
-                            columns[idx_column] = columns[idx_column].replace('_{N/A}_','').strip().rstrip()
+                            columns[idx_column] = columns[idx_column].replace('_{N/A}_','').strip().rstrip()              
+
                     matrix.append(columns)
                 del rows
             
@@ -68,14 +75,13 @@ def crazy_txt_to_json(file_content, is_dynamodb=True):
                     'period': period,
                     'company': company,
                     'fullName': id_name[6:],
-                    'status': None,
                     'netSalary': {'unit': 'BRL', 'value': None},
                     'grossSalary': {'unit': 'BRL', 'value': None},
                 })
                 del id_name
                 
                 # get jobTitle, hiredAt or terminatedAt
-                item.update(getData(matrix))
+                item.update(getData(matrix, year=payday[0:4]))
     
                 item['values'] = {'earnings': {}, 'discounts': {}, 'totals': {}}
 
@@ -100,12 +106,23 @@ def crazy_txt_to_json(file_content, is_dynamodb=True):
                                 """
                                 if len(columns) > 1 and isinstance(convert_number(columns[1], num_data_type), num_data_type):
                                     column = column.replace("'","")
-                                    item['values'][earnings_disconts(columns[1])].update({
-                                        column: [
-                                                    {'unit': 'days', 'value': convert_number(columns.pop(0), num_data_type)},
+                                    days = columns.pop(0).split('(') 
+
+                                    if len(days) == 1:
+                                        item['values'][earnings_disconts(columns[0])].update({column:
+                                                    [
+                                                        {'unit': 'days', 'value': convert_number(days[0], num_data_type)},
+                                                        {'unit': 'BRL', 'value': convert_number(columns.pop(0), num_data_type)}
+                                                    ]  
+                                        })
+                                    else:
+                                        item['values'][earnings_disconts(columns[0])].update({column:
+                                                [
+                                                    {'unit': 'days', 'value': convert_number(days[0], num_data_type)},
+                                                    {'unit': 'fraction', 'value': days[1].replace(' ','').replace(')','')},
                                                     {'unit': 'BRL', 'value': convert_number(columns.pop(0), num_data_type)}
-                                                ]
-                                    })
+                                                ]  
+                                        })
         
                                 elif column[0:6] == 'FÉRIAS' or column[0:7] == 'RECISÃO':
                                     item['status'] = column
