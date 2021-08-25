@@ -22,8 +22,6 @@ class TestTheData:
                 "status": {
                     "type": str,
                     "description": str,
-                    "date": str,
-                    "period": dict,
                 },
                 "netSalary": {
                     "unit": str,
@@ -104,9 +102,9 @@ if __name__ == '__main__':
 
     data = {"data":[]}
     for file in tqdm(files):
-        if 'aeroportos-07-2021' in file:
-            json_generator = crazy_txt_to_json(open(file, 'r', encoding='cp1252').read(), is_dynamodb=False)
-            data['data'] = data['data'] + [json for json in json_generator]
+        # if 'aeroportos-07-2021' in file:
+        json_generator = crazy_txt_to_json(open(file, 'r', encoding='cp1252').read(), is_dynamodb=False)
+        data['data'] = data['data'] + [json for json in json_generator]
     
     test_the_data = TestTheData()
     has_errors = test_the_data.run(data['data'], print_errors=False, save_log=True)
