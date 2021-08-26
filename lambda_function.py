@@ -1,7 +1,6 @@
 from txt_parser import crazy_txt_to_json
 from save import save_to_dynamodb
-from test import TestTheData
-import os.path as os_path
+from logging import exception
 from boto3 import client
 import urllib.parse
 
@@ -25,15 +24,7 @@ def lambda_handler(event, context):
         print(key)
         json_generator = crazy_txt_to_json(txt_file['Body'].read().decode('cp1252'))
 
-        # Test Data
-        test_the_data = TestTheData()
-        data = [data for data in json_generator]
-        has_errors = test_the_data.run(data)
-        del data
-        
-        if not has_errors:
-            save_to_dynamodb(json_generator, key)
+        save_to_dynamodb(json_generator, key)
         
     except Exception as e:
-        print(e)
-        raise e
+        exception(e)

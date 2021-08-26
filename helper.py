@@ -2,6 +2,14 @@ from datetime import datetime
 from decimal import Decimal
 from re import search
 
+def get_num_data_type(is_dynamodb=True):
+    """
+    Not going to make calculations with the numbers, so it's safe to use float to represent money.
+    DynamoDB only suports Decimal, and Decimal
+    """
+    if is_dynamodb:
+        return Decimal
+    return float
 
 def convert_number(n, num_data_type):
     try:
