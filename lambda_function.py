@@ -21,9 +21,7 @@ def lambda_handler(event, context):
     try:
         txt_file = s3.get_object(Bucket=bucket_name, Key=key)
         
-        print(key)
-        json_generator = crazy_txt_to_json(txt_file['Body'].read().decode('cp1252'))
-
+        json_generator = crazy_txt_to_json(txt_file['Body'].read().decode('cp1252'), is_dynamodb=True)
         save_to_dynamodb(json_generator, key)
         
     except Exception as e:
