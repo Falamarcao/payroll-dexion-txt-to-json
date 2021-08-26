@@ -1,17 +1,13 @@
 from helper import (convert_number, to_AWSDate, getData,
-                    company_data, earnings_disconts)
-from re import split, sub, finditer, DOTALL
+                    company_data, earnings_disconts, get_num_data_type)
+from re import split, sub, DOTALL
 from datetime import datetime, timezone
-from decimal import Decimal
-from json import dumps
+from test_data import TestTheData
 
 
-def crazy_txt_to_json(file_content, is_dynamodb=True):
-    if is_dynamodb:
-        num_data_type = Decimal
-    else:
-        num_data_type = float
-
+def crazy_txt_to_json(file_content, is_dynamodb):
+    num_data_type = get_num_data_type(is_dynamodb)
+    
     # Data clean - Remove headers, stats and footers
     file_content = file_content.replace(f'{" "*16}TRABALHADORES{" "*37}PROVENTOS{" "*41}DESCONTOS', '')
     file_content = sub(r'___.*\s*INFRACEA\s.*\n.*\n.*Folha\sde\sPagamento\n.*\n.*PERÍODO.*A\s\d{2}\/\d{2}\/\d{4}', '', file_content)
@@ -141,7 +137,12 @@ def crazy_txt_to_json(file_content, is_dynamodb=True):
                                         break
                                 
                                 if column == 'BASE DO IRRF MÊS' and bool(item):
-                                    yield item
+                                    test_the_data = TestTheData(is_dynamodb)
+                                    if test_the_data.run(item, save_log=is_dynamodb == False):
+                                       yield item
+                                    else:
+                                        print(f":\n id: \"{item['id']}\", \"{item['payday']}\", \"{item['fullName']}\"\n")
+                                        raise Exception("Error parsing file, check details above.\n\n")
                         
                         except IndexError:
                             next
