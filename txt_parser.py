@@ -138,12 +138,11 @@ def crazy_txt_to_json(file_content, is_dynamodb):
                                 
                                 if column == 'BASE DO IRRF MÊS' and bool(item):
                                     test_the_data = TestTheData(is_dynamodb)
-                                    if item['fullName'] == 'TAYNA PINHEIRO VIANA':
-                                        if test_the_data.run(item, save_log=is_dynamodb == False):
-                                            yield item
-                                        else:
-                                            print(f":\n id: \"{item['id']}\", \"{item['payday']}\", \"{item['fullName']}\"\n")
-                                            raise Exception("Error parsing file, check details above.\n\n")
+                                    if test_the_data.run(item, save_log=is_dynamodb == False):
+                                        yield item
+                                    else:
+                                        print(f":\n id: \"{item['id']}\", \"{item['payday']}\", \"{item['fullName']}\"\n")
+                                        raise Exception("Error parsing file, check details above.\n\n")
                         
                         except IndexError:
                             next
