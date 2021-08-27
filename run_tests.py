@@ -1,7 +1,8 @@
 from txt_parser import crazy_txt_to_json 
 from test_data import TestTheData
 from os.path import join
-from json import dump
+from json import dump, JSONEncoder
+from decimal import Decimal
 from tqdm import tqdm
 from os import walk
 
@@ -21,9 +22,15 @@ for file in tqdm(files):
     json_generator = crazy_txt_to_json(open(file, 'r', encoding='cp1252').read(), is_dynamodb=is_dynamodb)
     data['data'] = data['data'] + [json for json in json_generator]
 
-if not is_dynamodb:
-    f = open('output.json', 'w', encoding='utf-8')
-    f.close()
-    with open('output.json', 'w', encoding='utf-8') as json_file:
-        dump(data['data'], json_file, indent=4, ensure_ascii=False)
-    # print(dumps(data['data'], indent=4, ensure_ascii=False))
+# To make Decimal JSON seralizable to test when is_dynamodb = True 
+class DecimalEncoder(JSONEncoder):
+    def default(self, o):
+        if isinstance(o, Decimal):
+            return float(o)
+        return super(DecimalEncoder, self).default(o)
+
+f = open('output.json', 'w', encoding='utf-8')
+f.close()
+with open('output.json', 'w', encoding='utf-8') as json_file:
+    dump(data['data'], json_file, indent=4, ensure_ascii=False, cls=DecimalEncoder if is_dynamodb else None)
+# print(dumps(data['data'], indent=4, ensure_ascii=False))
