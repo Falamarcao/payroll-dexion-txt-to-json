@@ -5,9 +5,9 @@ from json import dump
 from tqdm import tqdm
 from os import walk
 
-is_dynamodb = True
+is_dynamodb = False
 
-path = 'E:/Users/falamarcao/Desktop/SomosINFRACEA/RH/Folha de Pagamento/025 - FOLHAS DE PAGAMENTOS - EXPORTAR'
+path = 'E:/Users/falamarcao/Desktop/025 - FOLHAS DE PAGAMENTOS - EXPORTAR/SERVIÇOS/2021'
 
 files = []
 for (dirpath, dirnames, filenames) in walk(path):
@@ -17,7 +17,7 @@ for (dirpath, dirnames, filenames) in walk(path):
 
 data = {"data":[]}
 for file in tqdm(files):
-    # if 'aeroportos-07-2021' in file:
+    # if 'folha-infracea-serviços-07-2021_COM_ERRO.TXT' in file:
     json_generator = crazy_txt_to_json(open(file, 'r', encoding='cp1252').read(), is_dynamodb=is_dynamodb)
     data['data'] = data['data'] + [json for json in json_generator]
 
