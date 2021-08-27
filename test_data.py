@@ -53,13 +53,15 @@ class TestTheData:
                             if k == 'values':
                                 for sub_key in ['earnings', 'discounts', 'totals']:
                                     for k, v in data[idx]['values'][sub_key].items():
-
                                         item = data[idx]['values'][sub_key][k]
 
                                         if isinstance(item, list):
                                             for idx2 in range(len(item)):
-                                                if not (item[idx2]['unit'] in self.str_units or isinstance(item[idx2]['value'], self.num_data_type)):
+                                                if not isinstance(item[idx]['value'], self.num_data_type) and item[idx]['unit'] not in self.str_units:
                                                     schema_errors.append({data[idx]['id']: f"[{k}] => '{item[idx2]['value']}'"})
+                                        else:
+                                            if not isinstance(item['value'], self.num_data_type) and item['unit'] not in self.str_units:
+                                                schema_errors.append({data['id']: f"[{k}] => '{item['value']}'"})
 
                             elif isinstance(v, dict):
                                 for k2, v2 in v.items():
@@ -76,13 +78,15 @@ class TestTheData:
                         if k == 'values':
                             for sub_key in ['earnings', 'discounts', 'totals']:
                                 for k, v in data['values'][sub_key].items():
-
                                     item = data['values'][sub_key][k]
 
                                     if isinstance(item, list):
                                         for idx in range(len(item)):
-                                            if not (item[idx]['unit'] in self.str_units or isinstance(item[idx]['value'], self.num_data_type)):
+                                            if not isinstance(item[idx]['value'], self.num_data_type) and item[idx]['unit'] not in self.str_units:
                                                 schema_errors.append({data['id']: f"[{k}] => '{item[idx]['value']}'"})
+                                    else:
+                                        if not isinstance(item['value'], self.num_data_type) and item['unit'] not in self.str_units:
+                                            schema_errors.append({data['id']: f"[{k}] => '{item['value']}'"})
 
                         elif isinstance(v, dict):
                             for k2, v2 in v.items():
