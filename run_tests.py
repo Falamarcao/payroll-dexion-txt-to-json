@@ -18,9 +18,11 @@ for (dirpath, dirnames, filenames) in walk(path):
 
 data = {"data":[]}
 for file in tqdm(files):
-    # if 'folha-infracea-serviços-07-2021_COM_ERRO.TXT' in file:
-    json_generator = crazy_txt_to_json(open(file, 'r', encoding='cp1252').read(), is_dynamodb=is_dynamodb)
-    data['data'] = data['data'] + [json for json in json_generator]
+    if 'folha-infracea-serviços-07-2021.TXT' in file:
+        # The test has to be rb (bytes), because S3 is like that
+        json_generator = crazy_txt_to_json(open(file, 'rb').read().decode('cp1252'), is_dynamodb=is_dynamodb)
+        # json_generator = crazy_txt_to_json(open(file, 'r', encoding='cp1252').read(), is_dynamodb=is_dynamodb)
+        data['data'] = data['data'] + [json for json in json_generator]
 
 # To make Decimal JSON seralizable to test when is_dynamodb = True 
 class DecimalEncoder(JSONEncoder):

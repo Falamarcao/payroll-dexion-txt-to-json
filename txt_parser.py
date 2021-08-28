@@ -10,15 +10,16 @@ def crazy_txt_to_json(file_content, is_dynamodb):
     
     # Data clean - Remove headers, stats and footers
     file_content = file_content.replace(f'{" "*16}TRABALHADORES{" "*37}PROVENTOS{" "*41}DESCONTOS', '')
-    file_content = sub(r'___.*\s*INFRACEA\s.*\n.*\n.*Folha\sde\sPagamento\n.*\n.*PERÍODO.*A\s\d{2}\/\d{2}\/\d{4}', '', file_content)
-    file_content = sub(r'INFRACEA.*\n.*-\s\d{2}:\d{2}:\d{2}', '', file_content)
+    file_content = sub(r'___.*\s*INFRACEA\s.*\r\n.*\r\n.*Folha\sde\sPagamento\r\n.*\r\n.*PERÍODO.*A\s\d{2}\/\d{2}\/\d{4}', '', file_content)
+    file_content = sub(r'INFRACEA.*\r\n.*-\s\d{2}:\d{2}:\d{2}', '', file_content)
     file_content = sub(r'Totalização(.*?)VALOR A COMPENSAR/RESTITUIR\s*:\s*\d+,\d{1,2}', '', file_content, flags=DOTALL)
     file_content = file_content.replace('_','')
 
     employees = split(r'.(?=[0-9]{6}([A-Z]*\s)*)', file_content)
 
     # Header (data) = employees.pop(0)
-    header_column = [x.strip() for x in employees.pop(0).split('\n')]
+    header_column = [x.strip() for x in employees.pop(0).split('\r\n')]
+
     dates = header_column.pop(2).split(' '*26)
 
     period = dates.pop(2).split(' A ')
@@ -34,7 +35,7 @@ def crazy_txt_to_json(file_content, is_dynamodb):
     for employee in employees:
         if employee != None:
 
-            rows = [x for x in employee.replace(':','').split('\n') if x  != [] and x not in ['', ' ']]
+            rows = [x for x in employee.replace(':','').split('\r\n') if x  != [] and x not in ['', ' ']]
     
             if len(rows) > 1:
                 matrix = []
@@ -141,8 +142,8 @@ def crazy_txt_to_json(file_content, is_dynamodb):
                                     if test_the_data.run(item, save_log=is_dynamodb == False):
                                         yield item
                                     else:
-                                        print(f":\n id: \"{item['id']}\", \"{item['payday']}\", \"{item['fullName']}\"\n")
-                                        raise Exception("Error parsing file, check details above.\n\n")
+                                        print(f":\r\n id: \"{item['id']}\", \"{item['payday']}\", \"{item['fullName']}\"\r\n")
+                                        raise Exception("Error parsing file, check details above.\r\n\r\n")
                         
                         except IndexError:
                             next
